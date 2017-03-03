@@ -1,0 +1,3 @@
+class NoNextCellException extends Exception {
+  
+}
