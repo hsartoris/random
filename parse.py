@@ -73,7 +73,7 @@ class State:
 				item.closed = False
 				self.closure.append(item)
 		self.doClosure()
-		self.simpleClosure()
+		#self.simpleClosure()
 		self.shifts = []
 		for c in self.closure:
 			if not c.X in self.shifts and not c.X == '':
@@ -188,7 +188,7 @@ def printSimple():
 if __name__ == "__main__":
 	doStates()
 	printStates()
-	printSimple()
+	#printSimple()
 #i = makeItem()
 #i.C = i.closure([])
 #s = State(i)
