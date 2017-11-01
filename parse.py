@@ -12,9 +12,9 @@ update 5: fixed printout spacing a little
 
 '''
 
-#rules = [ "S::=E$", "E::=E+T", "E::=T", "T::=T*F", "T::=F", "F::=(E)", "F::=i" ]
+rules = [ "S::=E$", "E::=E+T", "E::=T", "T::=T*F", "T::=F", "F::=(E)", "F::=i" ]
 
-rules = [ "E::=E_E^E", "E::=_E", "E::=E^E", "E::=(E)", "E::=c" ]
+#rules = [ "E::=E_E^E", "E::=_E", "E::=E^E", "E::=(E)", "E::=c" ]
 
 states = []
 
@@ -73,11 +73,23 @@ class State:
 				item.closed = False
 				self.closure.append(item)
 		self.doClosure()
+		self.simpleClosure()
 		self.shifts = []
 		for c in self.closure:
 			if not c.X in self.shifts and not c.X == '':
 				self.shifts.append(c.X)
 		self.shifted = False
+
+	def simpleClosure(self):
+		self.simple = []
+		for i1 in self.closure:
+			added = False
+			for i2 in self.simple:
+				if i1.string == i2.string and i1.z not in i2.z:
+					i2.z += ", " + i1.z
+					added = True
+			if not added:
+				self.simple.append(i1)
 
 	def doClosure(self):
 		closureLen = 0
@@ -108,6 +120,12 @@ class State:
 				self.shiftRules[i] = len(states)-1
 		self.shifted = True
 
+	def simpleStr(self):
+		temp = ''
+		for c in self.simple:
+			temp += str(c) + "\n"
+		temp += "\n"
+		return temp
 
 	def __str__(self):
 		temp = ''
@@ -134,8 +152,8 @@ class State:
 		return temp
 
 def makeItem():
-	#return Item("S::=.E$", "?")
 	return Item("S::=.E$", "?")
+	#return Item("S::=.E$", "?")
 
 def doStates():
 	states.append(State(makeItem()))
@@ -156,9 +174,21 @@ def printStates():
 		print(states[i])
 	print("Note that the accept state is included here, increasing count by 1.")
 
+def printSimple():
+	global states
+	global verbose
+	verbose = False
+	for i in range(len(states)):
+		print("-"*65 + "\n")
+		print("State " + str(i + 1) + ":")
+		print(states[i].simpleStr())
+
+
+
 if __name__ == "__main__":
 	doStates()
 	printStates()
+	printSimple()
 #i = makeItem()
 #i.C = i.closure([])
 #s = State(i)
