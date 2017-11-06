@@ -1,16 +1,17 @@
 '''
-MASSIVE IMPROVEMENT
 
-!!!!!README!!!!!!!
+Limitations: readout spacing is occasionally useless and misaligns lookaheads.
+Don't feel like digging around ncurses though.
 
-just run python parse.py
+All terminals and nonterminals must be one character. Additionally, any
+uppercase character is assumed to be a nonterminal, and vice versa.
 
-that's it
-shit works
-
-update 5: fixed printout spacing a little
+All rules must start with something of the form A::=
 
 '''
+# for making the DFA
+#import numpy as np
+#import networkx as nx
 
 rules = [ "S::=E$", "E::=E+T", "E::=T", "T::=T*F", "T::=F", "F::=(E)", "F::=i" ]
 
@@ -22,10 +23,10 @@ verbose = True
 
 class Item:
 	def __init__(self, str, z):
+		# hacky but works
 		self.string = str
 		self.z = z
 		self.LHS = self.string[:4]
-		#tail = self.string.split("=")[1].split(".")
 		tail = self.string[4:].split('.')
 		if len(tail[1]) == 0 or not tail[1][0].isupper():
 			self.hasClosure = False
@@ -73,7 +74,7 @@ class State:
 				item.closed = False
 				self.closure.append(item)
 		self.doClosure()
-		#self.simpleClosure()
+		self.simpleClosure()
 		self.shifts = []
 		for c in self.closure:
 			if not c.X in self.shifts and not c.X == '':
@@ -89,7 +90,7 @@ class State:
 					i2.z += ", " + i1.z
 					added = True
 			if not added:
-				self.simple.append(i1)
+				self.simple.append(Item(i1.string, i1.z))
 
 	def doClosure(self):
 		closureLen = 0
@@ -125,6 +126,10 @@ class State:
 		for c in self.simple:
 			temp += str(c) + "\n"
 		temp += "\n"
+		if len(self.shifts) > 0:
+			temp += "Shifts: \n"
+			for i in range(len(self.shifts)):
+				temp += self.shifts[i] + ": " + str(self.shiftRules[i]+1) + "\n"
 		return temp
 
 	def __str__(self):
@@ -132,10 +137,10 @@ class State:
 		for c in self.closure:
 			temp += str(c) + "\n"
 		temp += "\n"
-		if len(self.shifts) > 0:
-			temp += "Shifts: \n"
-			for i in range(len(self.shifts)):
-				temp += self.shifts[i] + ": " + str(self.shiftRules[i]+1) + "\n"
+		#if len(self.shifts) > 0:
+		#	temp += "Shifts: \n"
+		#	for i in range(len(self.shifts)):
+		#		temp += self.shifts[i] + ": " + str(self.shiftRules[i]+1) + "\n"
 		return temp
 
 	def __eq__(self, other):
@@ -172,22 +177,40 @@ def printStates():
 		if not verbose: print("string\tlookahead")
 		else: print("string\t\tlookahead\talpha\tX\tbeta\tz\tF")
 		print(states[i])
+		print("-"*35)
+		print("Condensed state: ")
+		print(states[i].simpleStr())
 	print("Note that the accept state is included here, increasing count by 1.")
 
 def printSimple():
 	global states
 	global verbose
 	verbose = False
+	print(("-"*35 + "\n")*2)
+	print("Condensed states start here")
 	for i in range(len(states)):
-		print("-"*65 + "\n")
+		print("-"*35 + "\n")
 		print("State " + str(i + 1) + ":")
 		print(states[i].simpleStr())
 
+def makeAdjacency():
+	global states
+	out = np.zeros(shape=(len(states)+1, len(states)+1))
+	for i in range(len(states)):
+		for shift in states[i].shiftRules:
+			out[i+1][shift+1] = 1
+	return np.matrix(out)
+
+def graphMatrix(w):
+	Gx = nx.drawing.nx_pydot.to_pydot(nx.DiGraph(w))
+	Gx.write_png("DFA.png", prog='dot')
 
 
 if __name__ == "__main__":
 	doStates()
 	printStates()
+	#graphMatrix(makeAdjacency())
+	# prints simple states
 	#printSimple()
 #i = makeItem()
 #i.C = i.closure([])
