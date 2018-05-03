@@ -1,4 +1,5 @@
-import processing.sound.*;
+import ddf.minim.*;
+import ddf.minim.analysis.*;
 
 int numDots = 200;
 Dot[] dots = new Dot[numDots];
@@ -11,9 +12,11 @@ final float HUE_FACTOR = 5;
 final float ampOff = .2;
 final float BRIGHT_DROP = 1;
 
-AudioIn in;
+AudioInput in;
 FFT fft;
 //Amplitude amp;
+Minim minim;
+
 int bands = 256;
 float[] spectrum = new float[bands];
 
@@ -24,19 +27,11 @@ void setup() {
     dots[i] = new Dot(random(width), random(height), random(3), random(2 * PI));
   }
   colorMode(HSB);
-  fft = new FFT(this, bands);
+  minim = new Minim(this);
   //amp = new Amplitude(this);
-  in = new AudioIn(this,0);
-  in.start();
-  fft.input(in);
+  in = minim.getLineIn();
+  fft = new FFT(in.bufferSize(), in.sampleRate());
   //amp.input(in);
-  while(true) {
-    fft.analyze(spectrum);
-    println("got here");
-    bass = 0;
-    for (int i = 0; i < bands/4; i++) bass += spectrum[i];
-    println(bass);
-  }
 }
 
 float dist;
@@ -52,7 +47,7 @@ float ampl;
 void draw() {
   while(!prepped) updateAudio();
   ampl = updateAudio();
-  println(bass);
+  println(ampl);
   strokeWeight(2);
   lights();
   fill(255);
@@ -86,9 +81,8 @@ void draw() {
 
 float updateAudio() {
   // returns rms amplitude, scaled appropriately
-  fft.analyze(spectrum);
-  //amplitude = amp.analyze();
-  amplitude = 0;
+  fft.forward(in.mix);
+  amplitude = in.mix.level();
   bass = 0;
   for (int i = 0; i < bands/4; i++) bass += spectrum[i];
   println(bass);
